@@ -1,0 +1,544 @@
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
+\begin_document
+\begin_header
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language russian
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry false
+\use_amsmath 1
+\use_esint 1
+\use_mhchem 1
+\use_mathdots 1
+\cite_engine basic
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\use_refstyle 1
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Pilot 2
+\end_layout
+
+\begin_layout Date
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Введение
+\end_layout
+
+\begin_layout Standard
+Pilot 2 должен обеспечить выполнение абстрактных заданий, основанных на
+ направленных ациклических графах задач разного типа.
+ При этом обязательной является работа как минимум с двумя категориями заданий:
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Quotes eld
+\end_inset
+
+Классические
+\begin_inset Quotes erd
+\end_inset
+
+ задания Pilot 1:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Единственная разновидность задачи
+\begin_inset space ~
+\end_inset
+
+--- 
+\begin_inset Quotes eld
+\end_inset
+
+запуск на выполнение на удаленном ресурсе
+\begin_inset Quotes erd
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Поставщик информации для matchmaking --- infosys2.
+\end_layout
+
+\begin_layout Itemize
+Важно следить за делегациями.
+\end_layout
+
+\begin_layout Standard
+Ограничения следующие из этих требований:
+\end_layout
+
+\begin_layout Itemize
+Не требуется меппинг пользователей при запуске задач.
+\end_layout
+
+\begin_layout Itemize
+Не требуется staging.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Задания-
+\begin_inset Quotes eld
+\end_inset
+
+задачи
+\begin_inset Quotes erd
+\end_inset
+
+ для выполнения на локальном ресурсе.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Разновидности задач (необходимый минимум): выполнить staging локально; поставить
+ задачу в очередь на выполнение на внешнем ресурсе (через стык)
+\end_layout
+
+\begin_layout Itemize
+Входное описание задания должно трансформироваться в локальный стандартный
+ граф задач для выполнения: stagein 
+\begin_inset Formula $\Rightarrow$
+\end_inset
+
+ выполнить на внешнем ресурсе 
+\begin_inset Formula $\Rightarrow$
+\end_inset
+
+ выполнить stageout
+\end_layout
+
+\begin_layout Standard
+Ограничения, следующие из этих требований:
+\end_layout
+
+\begin_layout Itemize
+Каждую разновидность задачи требуется выполнять с меппингом пользователя
+ в контейнере, лишенном 
+\begin_inset Quotes eld
+\end_inset
+
+родительских
+\begin_inset Quotes erd
+\end_inset
+
+ прав.
+\end_layout
+
+\begin_layout Itemize
+Существует достаточно большое количество ресурсоемких операций, выполняемых
+ непосредственно на сервере Pilot 2, следовательно нужна какая-то очередь,
+ контролирующая загрузку ресурсов сервера.
+\end_layout
+
+\begin_layout Itemize
+Поскольку задачи на сервер могут попадать от разных пользователей, из-за
+ заметно конечного ресурса сервера необходимо 
+\begin_inset Quotes eld
+\end_inset
+
+честное
+\begin_inset Quotes erd
+\end_inset
+
+ разделение ресурсов между различными пользователями сервера.
+\end_layout
+
+\end_deeper
+\begin_layout Section
+Концепция реализации
+\end_layout
+
+\begin_layout Standard
+Выполнение каждой задачи разбивается на отдельные шаги (в pilot 1 с аналогичной
+ целью использовались только состояний задач).
+ Очередные шаги задач, для которых выполнены все предварительные требования,
+ поступают в очередь выполнения.
+\end_layout
+
+\begin_layout Subsection
+Разбивка на шаги для задач разного типа
+\end_layout
+
+\begin_layout Standard
+Каждый шаг является минимальной единицей исполнения.
+ Круги --- точки входа/выхода в соответствующие подалгоритмы.
+ Простые прямоугольники --- шаги, выполняемые с полномочиями сервера Pilot
+ 2.
+ Прямоугольники с двойной стенкой --- шаги, выполняемые с полномочиями пользоват
+еля.
+\end_layout
+
+\begin_layout Subsubsection
+Запуск на выполнение на удаленном ресурсе
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename grid-task-lifecycle.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Обновление делегации
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename delegation-renew-life-cycle.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Доставка обновленной делегации
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename delegation-update-life-cycle.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Выполнение staging
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename staging-life-cycle.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Постановка задачи в очередь через стык
+\end_layout
+
+\begin_layout Standard
+\begin_inset Graphics
+	filename local-job-life-cycle.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Исправление зависимостей задач
+\end_layout
+
+\begin_layout Standard
+Шаг 
+\begin_inset Quotes eld
+\end_inset
+
+исправление зависимостей задач
+\begin_inset Quotes erd
+\end_inset
+
+ присутствует для всех выполняемых элементов.
+ Результатом выполнения этого шага является:
+\end_layout
+
+\begin_layout Itemize
+Для задач, зависимости которых теперь полностью удовлетворены, в очередь
+ выполнения задач Pilot 2 вставляется первый шаг выполнения соответствующей
+ задачи.
+\end_layout
+
+\begin_layout Itemize
+Для задач, которые были отменены, по запросу пользователя либо в результате
+ аварии, проверяются все зависимости и для тех задач, которые не начинали
+ выполнения, выставляется состояние 
+\begin_inset Quotes eld
+\end_inset
+
+aborted
+\begin_inset Quotes erd
+\end_inset
+
+, для остальных --- в общую очередь выполнения Pilot 2 ставится шаг 
+\begin_inset Quotes eld
+\end_inset
+
+отмена
+\begin_inset Quotes erd
+\end_inset
+
+ для соответствующей задачи.
+\end_layout
+
+\begin_layout Section
+Общая схема сервиса
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways true
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename Pilot-2-outline.pdf
+	width 100col%
+
+\end_inset
+
+
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Общая схема сервиса Pilot 2
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:pilot-2-outline"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Общая схема сервиса приведена на рисунке 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:pilot-2-outline"
+
+\end_inset
+
+.
+ Основные изменения pilot-httpd по сравнению с Pilot 1:
+\end_layout
+
+\begin_layout Itemize
+Вся работа с TLS вынесена в отдельный HTTP Proxy, являющийся модифицированной
+ версией STUD (
+\begin_inset Flex URL
+status collapsed
+
+\begin_layout Plain Layout
+
+https://github.com/bumptech/stud
+\end_layout
+
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Itemize
+Переключился с Pylons + Paste на Flask.
+\end_layout
+
+\begin_layout Itemize
+Убрана вся работа с БД.
+ Запросы на состояние задач/заданий теперь просто передаются дальше по цепочке.
+\end_layout
+
+\begin_layout Itemize
+Matchmaker перенесен из pilot-spooler в pilot-httpd.
+\end_layout
+
+\begin_layout Standard
+Существенные изменения произошли в backend-части сервиса:
+\end_layout
+
+\begin_layout Itemize
+Выделен отдельный сервис (pilot-queue), занимающийся планированием действий
+ и постоянным хранением информации.
+ Этот же сервис следит за состоянием делегаций.
+ Выполнение действий вынесено в отдельный сервис.
+\end_layout
+
+\begin_layout Itemize
+Сделан новый сервис pilot-worker, выполняющий действия с задачами в порядке
+ очереди внутреннего планировщика.
+ Сервис может быть запущен в нескольких экземплярах для повышения пропускной
+ способности сервера.
+ Основная часть всей 
+\begin_inset Quotes eld
+\end_inset
+
+тяжелой работы
+\begin_inset Quotes erd
+\end_inset
+
+ выполняется pilot-worker.
+\end_layout
+
+\begin_layout Section
+Планировщик
+\end_layout
+
+\begin_layout Standard
+Отдельные шаги выполнения заносятся в очередь выполнения.
+ Возможности очереди:
+\end_layout
+
+\begin_layout Itemize
+Приоритеты для задач.
+\end_layout
+
+\begin_layout Itemize
+Отложенное начало выполнение задач
+\end_layout
+
+\begin_layout Itemize
+Автоматическое понижение приоритета задач для тяжелых пользователей.
+\end_layout
+
+\begin_layout Standard
+В данный момент реализован алгоритм 
+\begin_inset Quotes eld
+\end_inset
+
+Лотерея
+\begin_inset Quotes erd
+\end_inset
+
+, заключающийся в следующем:
+\end_layout
+
+\begin_layout Enumerate
+Каждая задача при постановке в очередь получает определенное количество
+ 
+\begin_inset Quotes eld
+\end_inset
+
+билетов
+\begin_inset Quotes erd
+\end_inset
+
+, количество которых зависит от приоритета.
+\end_layout
+
+\begin_layout Enumerate
+В лотерее участвую задачи, для которых время начала выполнения не превышает
+ текущее время.
+\end_layout
+
+\begin_layout Enumerate
+Между всеми задачами, участвующими в розыгрыше, случайным образом 
+\begin_inset Quotes eld
+\end_inset
+
+разыгрывается
+\begin_inset Quotes erd
+\end_inset
+
+ билет, обладатель которого будет исполнен следующим.
+\end_layout
+
+\begin_layout Enumerate
+Через каждые N шагов планировки от момента постановки в очередь задача получает
+ новые дополнительные билеты, количество которых зависит от приоритета (тем
+ самым повышается вероятность ее выполнения на следующем шаге).
+\end_layout
+
+\begin_layout Standard
+В дальнейшем планируется корректировать количество 
+\begin_inset Quotes eld
+\end_inset
+
+билетов
+\begin_inset Quotes erd
+\end_inset
+
+ в зависимости от ресурсов, потраченных на выполнение задач данного пользователя
+, либо реализовать 
+\begin_inset Quotes eld
+\end_inset
+
+честный
+\begin_inset Quotes erd
+\end_inset
+
+ Fair Scheduler.
+\end_layout
+
+\end_body
+\end_document

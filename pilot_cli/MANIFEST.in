@@ -1,0 +1,2 @@
+include examples/*.js
+include pilot_cli/schema/*.js

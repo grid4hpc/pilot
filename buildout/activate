@@ -1,0 +1,12 @@
+#!/bin/sh
+
+here="/home/shamardin/work/pilot/buildout"
+bindir=$here/bin
+
+if [[ ":$PATH:" != *":$bindir:"* ]]; then
+  PATH="$bindir:$PATH"
+	PS1="(b)$PS1"
+	export PATH PS1
+fi
+
+unset bindir

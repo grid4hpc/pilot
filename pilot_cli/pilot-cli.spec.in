@@ -1,0 +1,52 @@
+%define svnrev @SVNREV@
+
+%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%{!?python_sitearch: %define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
+%{!?python_egg_version: %define python_egg_version %(%{__python} -c "import sys; print 'py%d.%d' % sys.version_info[0:2]")}
+
+%define setup_extra %(%{__python} -c "print '%{?dist}'.startswith('.fc') and '--for-fedora' or '--for-epel'")
+
+Name:           pilot-cli
+Version:        0.4
+Release:        1.svn%{svnrev}%{?dist}
+Summary:        GridNNN pilot command-line interface utilities
+Group:          Development/Tools
+License:        GPLv3
+URL:            http://www.ngrid.ru/trac/wiki/Pilot
+Source0:        http://www.ngrid.ru/sw/pilot_cli/pilot_cli-%{version}dev-r%{svnrev}.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildArch:      noarch
+
+BuildRequires:  python-setuptools
+BuildRequires:  python-devel
+Requires:       pytz, python-simplejson, python-uuid, m2crypto, python-setuptools
+
+%description 
+This package contains CLI utilities for the Pilot grid job and task
+management system
+
+%prep
+%setup -q -n pilot_cli-%{version}dev-r%{svnrev}
+
+%build
+python setup.py %{setup_extra} build
+
+%install
+rm -rf %{buildroot}
+python setup.py %{setup_extra} install --root=%{buildroot} --record=INSTALLED_FILES
+rm -rf %{buildroot}%{python_sitelib}/pilot_cli/ext/jsonschema/tests
+rm -rf %{buildroot}%{python_sitelib}/pilot_cli/tests
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+%{_bindir}/pilot-*
+%{python_sitelib}/pilot_cli
+%{python_sitelib}/pilot_cli-%{version}dev_r%{svnrev}-%{python_egg_version}.egg-info
+#%doc
+
+%changelog
+* Fri Mar 06 2010 Lev Shamardin <shamardin@theory.sinp.msu.ru> - 0.1-1
+- Initial package version

@@ -1,0 +1,8 @@
+/bin
+/cache
+/develop-eggs
+/eggs
+/parts
+/src
+/.installed.cfg
+/.mr.developer.cfg

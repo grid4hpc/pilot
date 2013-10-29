@@ -1,0 +1,57 @@
+<%
+from pilot.lib.resources import resource_name
+%>\
+<%inherit file="/base.html"/>\
+<%def name="title()">Resource View</%def>\
+
+<h1>Visible resources</h1>
+<hr/>
+  % for rdesc in sorted(res.keys()):
+  <% 
+     r = res[rdesc]
+     conf = r.config 
+     s = r.state
+  %>
+  <div class="grid_12">
+    <strong class="large">${resource_name(*rdesc)}</strong>
+    % if not s.enabled:
+    <span class="quiet">(disabled)</span>
+    % endif
+  </div>
+  <div class="grid_6">
+    <p>${conf.os_name} ${conf.os_version} ${conf.os_release} (${conf.platform})</p>
+    <p>${conf.physical_slots} nodes / ${conf.logical_cpus} cores.</p>
+    <p class="large">Node properties:</p>
+      <ul>
+        <li>CPU: ${conf.physical_cpus} x ${conf.cpu_model or "unknown cpu"} (${conf.cpu_instruction_set}) (${conf.smp_size} cores), ${conf.cpu_hz} MHz</li>
+        <li>Memory: ${conf.ram_size} MB RAM / ${conf.virtual_size} MB Virtual
+        % if len(r.software) > 0:
+        <li>Software:
+          <ul>
+            % for sw in r.software:
+            <li>${sw.name} ${sw.version}</li>
+            % endfor
+          </ul>
+        </li>
+        % endif
+      </ul>
+  </div>
+  <div class="grid_6">
+    <p class="large">State:</p>
+    <ul>
+      <li>CPUs: ${s.total_cpus} total / ${s.free_cpus} free</li>
+      <li>Jobs: ${s.running_jobs} running, ${s.waiting_jobs} waiting (${s.total_jobs} total)</li>
+    </ul>
+    % if len(r.acls) > 0:
+    <p class="large">Access allowed for:</p>
+    <ul>
+      % for acl in r.acls:
+      <li>${acl}</li>
+      % endfor
+    </ul>
+    % endif
+  </div>
+  <div class="clear"></div>
+  <hr/>
+  % endfor
+</ul>

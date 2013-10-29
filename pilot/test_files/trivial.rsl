@@ -1,0 +1,5 @@
+&(executable=/bin/sh)
+ (scratch_dir=$(HOME))
+ (directory=$(SCRATCH_DIRECTORY))
+ (arguments= -c "env ; pwd ; hostname ; whoami ")
+ (stdout="blah")

@@ -1,0 +1,148 @@
+%define svnrev @SVNREV@
+
+%define python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")
+%define python_egg_version %(%{__python} -c "import sys; print 'py%d.%d' % sys.version_info[0:2]")
+
+%define setup_extra %(%{__python} -c "print '%{?dist}'.startswith('.fc') and '--for-fedora' or '--for-epel'")
+
+%define with_fedora %(%{__python} -c "print '%{?dist}'.startswith('.fc') and '1' or '0'")
+%define with_epel %(%{__python} -c "print '%{?dist}'.startswith('.fc') and '0' or '1'")
+
+%define pkgname pilot
+
+Name:           %{pkgname}
+Version:        0.4
+Release:        1.svn%{svnrev}%{?dist}
+Summary:        GridNNN grid job execution service
+
+Group:          System Environment/Daemons
+License:        GPLv3
+URL:            http://www.ngrid.ru/trac/wiki/Pilot
+Source0:        http://www.ngrid.ru/sw/pilot/%{pkgname}-%{version}dev-r%{svnrev}.tar.gz
+BuildRoot:      %{_tmppath}/%{pkgname}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+BuildRequires:  python-devel
+BuildRequires:  python-setuptools
+BuildRequires:  swig
+BuildRequires:  openssl-devel
+BuildRequires:  python-docutils
+BuildRequires:  python-paste-script >= 1.7.3
+BuildRequires:  python-pylons >= 0.9.7
+BuildRequires:  pilot-lib-migrate >= 0.5.4
+BuildConflicts: pilot-lib-migrate >= 0.5.5
+
+Requires:       pilot-cli
+Requires:       python-uuid
+Requires:       python-gridproxy
+Requires:	python-ngrid >= 0.4.1
+Requires:       logrotate
+Requires:       daemonize
+Requires:       myproxy
+Requires:       python-pylons >= 0.9.7
+Requires:       python-eventlet
+Requires:       pilot-lib-migrate >= 0.5.4
+Conflicts:      pilot-lib-migrate >= 0.5.5
+Requires(pre):  /usr/sbin/useradd
+Requires(pre):  /usr/sbin/groupadd
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(preun): initscripts
+Requires(postun): initscripts
+%if 0%{?fedora} > 0
+BuildRequires:  python-sphinx
+Requires:       python-sqlalchemy >= 0.5.6
+Requires:       m2crypto >= 0.20.1
+
+BuildRequires:  python-sqlalchemy >= 0.5.6
+BuildRequires:  m2crypto >= 0.20.1
+
+%else
+BuildRequires:  python-sphinx10
+Requires:       python-elementtree >= 1.2.6
+Requires:       python-sqlalchemy0.5 >= 0.5.6
+Requires:       python-m2crypto20 >= 0.20.1
+Requires:       python-sqlite2 >= 2.3.5
+
+BuildRequires:  python-sqlalchemy0.5 >= 0.5.6
+BuildRequires:  python-m2crypto20 >= 0.20.1
+%endif
+
+%description
+GridNNN Pilot grid job execution service.
+
+%prep
+%setup -q -n pilot-%{version}dev-r%{svnrev}
+
+
+%build
+python setup.py %{setup_extra} build
+pushd doc
+mkdir -p build/html
+%if 0%{?fedora} > 0
+make html
+%else
+make html SPHINXBUILD=sphinx-1.0-build
+%endif
+popd
+
+%install
+rm -rf %{buildroot}
+python setup.py %{setup_extra} install --root=%{buildroot} --record=INSTALLED_FILES
+install -m 0644 pilot/model/repository/migrate.cfg %{buildroot}%{python_sitearch}/pilot/model/repository
+rm -rf %{buildroot}%{python_sitearch}/tests
+rm -rf %{buildroot}%{python_sitearch}/pilot/tests
+install -m 0755 -d %{buildroot}%{_sysconfdir}/pilot
+install -m 0755 -d %{buildroot}%{_sysconfdir}/rc.d/init.d
+install -m 0644 pilot-example.ini %{buildroot}%{_sysconfdir}/pilot/pilot.ini
+paster pilot_initscript -c /etc/pilot/pilot.ini -u pilot %{buildroot}%{_sysconfdir}/rc.d/init.d/pilot
+install -m 0755 -d %{buildroot}%{_sysconfdir}/logrotate.d
+install -m 0644 logrotate-pilot.conf %{buildroot}%{_sysconfdir}/logrotate.d/pilot
+rm -f %{buildroot}%{python_sitearch}/pilot/templates/rc-script.sh
+install -m 0755 -d %{buildroot}/var/lib/pilot
+install -m 0755 -d %{buildroot}/var/log
+
+%clean
+rm -rf %{buildroot}
+
+%pre
+getent group pilot > /dev/null || \
+       groupadd -r pilot
+getent passwd pilot > /dev/null || \
+       useradd -r -g pilot -d /var/lib/pilot -s /sbin/nologin \
+               -c "Pilot service account" pilot
+exit 0
+
+%post
+if [ $1 = 1 ] ; then
+    /sbin/chkconfig --add pilot-spooler
+    /sbin/chkconfig --add pilot-httpd
+fi
+
+%preun
+if [ $1 = 0 ] ; then
+    /sbin/service pilot-spooler stop > /dev/null 2>&1
+    /sbin/service pilot-httpd stop > /dev/null 2>&1
+    /sbin/chkconfig --del pilot-spooler
+    /sbin/chkconfig --del pilot-httpd
+fi
+
+%postun
+if [ $1 -ge 1 ] ; then
+    /sbin/service pilot-spooler condrestart > /dev/null 2>&1
+    /sbin/service pilot-httpd condrestart > /dev/null 2>&1
+fi
+
+%files
+%defattr(-,root,root,-)
+%{_bindir}/pilot-*
+%{python_sitearch}/pilot
+%{python_sitearch}/pilot-%{version}dev_r%{svnrev}-%{python_egg_version}.egg-info
+%{_sysconfdir}/rc.d/init.d/pilot-*
+%config(noreplace) %{_sysconfdir}/logrotate.d/pilot
+%config(noreplace)%{_sysconfdir}/pilot
+%doc README.txt doc/build/html schema
+%attr(0755,pilot,pilot) %dir /var/lib/pilot
+
+%changelog
+* Fri Mar 19 2010 Lev Shamardin <shamardin@theory.sinp.msu.ru> - 0.0.1-1
+- Initial package version

@@ -1,0 +1,11 @@
+/pilot_cli.egg-info
+/pip-log.txt
+/cli-debug-env
+/ext_dist
+/dist
+/build
+/.coverage
+/pilot-cli.spec
+/*.rpm
+/version
+/.ropeproject

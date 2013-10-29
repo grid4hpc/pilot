@@ -1,0 +1,239 @@
+#
+# pilot configuration
+#
+# The %(here)s variable will be replaced with the parent directory of this file
+#
+[app:pilot]
+# Database configuration. Url syntax:
+# driver://username:password@host:port/database
+# Supported drivers (required python module - CentOS package name): 
+#   sqlite (builtin), 
+#   mysql (MySQLdb - MySQL-python)
+#   postgres (psycopg2 - python-psycopg2)
+#   oracle (cx_Oracle - N/A)
+#   mssql (pyodbc - pyodbc)
+#   firebird (kinterbasdb - python-kinterbasdb)
+# Do not forget to install the corresponding python database modules.
+database.url = sqlite:///%(here)s/pilot.db
+
+# the list of certificates which give access to accounting information:
+#accounting_access =
+#  /C=RU/O=RDIG/OU=users/OU=sinp.msu.ru/CN=Lev Shamardin
+#  /C=RU/O=NanoGrid/OU=hosts/OU=sinp.msu.ru/CN=tb01.ngrid.ru
+accounting_access = 
+
+# do not change this
+use = egg:pilot
+
+[common]
+# SSL options
+# -----------
+ssl_certificate = /etc/grid-security/hostcert.pem
+ssl_privatekey = /etc/grid-security/hostkey.pem
+# ssl_cafile = ...
+ssl_capath = /etc/grid-security/certificates
+voms_dir = /etc/grid-security/vomsdir
+
+# User options
+# ------------
+# user = pilot
+# group = pilot
+
+# MDS options
+# -----------
+# URL of the MDS Index:
+# mds_url = https://gr4.phys.spbu.ru:8443/wsrf/services/DefaultIndexService
+mds_url = https://cis.ngrid.ru:8443/wsrf/services/DefaultIndexService
+
+# Registration service options
+# ----------------------------
+# URL of the Registration service export endpoint:
+reg_url = https://reg.ngrid.ru/export.aspx
+# Include only production sites:
+production_only = true
+
+[httpd]
+# Log files
+# If you do not specify any logfiles, any corresponding output will be discarded.
+# access_log = ...
+# error_log = ...
+
+# Store pilot-httpd pid in this file:
+# pidfile = /opt/pilot/var/run/pilot-httpd.pid
+
+# Serve for this host and port:
+# host = 0.0.0.0
+# port = 5053
+
+# Server performance tuning:
+# thread_pool = 10
+# max_threads = -1
+# socket_queue_size = 5
+# socket_timeout = 10
+# shutdown_timeout = 1
+# nodelay = true
+
+[spooler]
+# Store pilot-spooler pid in this file:
+# pidfile = /opt/pilot/var/run/pilot-spooler.pid
+
+# Log messages to this file:
+# logfile = ...
+
+# Debug level:
+# debug_level = 1
+
+# Paths to globus command-line tools.
+# Default: $$GLOBUS_LOCATION/bin/globusrun-ws
+# globusrun_ws = ...
+# Default: $$GLOBUS_LOCATION/bin/wsrf-query
+# wsrf_query = ...
+
+# Location of resource information dump file
+# dump_filename = /var/tmp/pilot-resources.state
+
+###########################################################
+# Spooler internal settings.                              #
+# Do not change these unless you know what you are doing. # 
+###########################################################
+
+# Maximum allowed time for globusrun execution, in seconds.
+# job_submit_timeout = 15
+
+# Maximum allowed time for wsrf-query  on a running job EPR execution,
+# in seconds.
+# job_query_timeout = 15
+
+# Maximum allowed time for globusrun -kill execution, in seconds.
+# job_kill_timeout = 15
+
+# Duration between checks for pending operations in the database, in
+# seconds.
+# job_operation_check_period = 5
+
+# Duration between the heartbeat execution (which also checks memory
+# consumption), in seconds.
+# memory_heartbeat = 5
+
+# Duration between checks if all jobs marked as running in the
+# database have their associated job tracking objects.
+# job_running_set_refresh = 5
+
+# Duration between checks of internal job state
+# job_poll_period = 1
+
+# Duration between polling globus task status with wsrf-query (if no
+# notifications received), in seconds.
+# wsn_poll_period = 120
+
+# Duration between database garbage collector runs, in seconds.
+# garbage_collection_cycle = 600
+
+# Amount of accounting log data to keep, in days.
+# accounting_log_keep_days = 14
+
+[matchmaker]
+##########################
+# Matchmaker host filter #
+##########################
+
+# allowed_hosts contains a list of regular expressions (separated by
+# commas) of hosts you would like to allow. Unspecified value will
+# match any host.
+# Example:
+# allowed_hosts = .+.foo.org, jobmanager.+.bar.org, mpicluster.qux.org
+
+# denied_hosts contains a list of regular expressions (separated by
+# commas) of hosts you would like to exclude. Unspecified value will
+# match any host.
+# Example:
+# denied_hosts = bozo.foo.org
+
+# order should contain a string "allow, deny" or "deny, allow" which
+# will define the order in which host filter lists will be used. A
+# host which does not match any of the lists will be excluded. Default
+# value is "deny, allow"
+# Example:
+# order = deny, allow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################################################
+# Options below are for expert use only. Change them only if you know what   #
+# you are doing.                                                             #
+##############################################################################
+#
+# Pylons configuration
+#
+[DEFAULT]
+debug = true
+email_to = you@yourdomain.com
+smtp_server = localhost
+error_email_from = paste@localhost
+
+[server:main]
+use = egg:Paste#http
+host = 0.0.0.0
+port = 5000
+
+[app:main]
+use = pilot
+full_stack = true
+static_files = true
+config_file = %(__file__)s
+
+cache_dir = %(here)s/data
+beaker.session.key = pilot
+beaker.session.secret = ${app_instance_secret}
+app_instance_uuid = ${app_instance_uuid}
+
+# If you'd like to fine-tune the individual locations of the cache data dirs
+# for the Cache data, or the Session saves, un-comment the desired settings
+# here:
+#beaker.cache.data_dir = %(here)s/data/cache
+#beaker.session.data_dir = %(here)s/data/sessions
+
+# WARNING: *THE LINE BELOW MUST BE UNCOMMENTED ON A PRODUCTION ENVIRONMENT*
+# Debug mode will enable the interactive debugging tool, allowing ANYONE to
+# execute malicious code after an exception is raised.
+set debug = false
+
+# Disable database echo debug output by default
+database.echo = false
+
+# Logging configuration
+[loggers]
+keys = root
+
+[handlers]
+keys = console
+
+[formatters]
+keys = generic
+
+[logger_root]
+level = INFO
+handlers = console
+
+[handler_console]
+class = StreamHandler
+args = (sys.stderr,)
+level = NOTSET
+formatter = generic
+
+[formatter_generic]
+format = %(asctime)s %(levelname)-5.5s [%(name)s] %(message)s

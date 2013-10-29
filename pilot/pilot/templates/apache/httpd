@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+
+pidfile="${server_root}/httpd.pid"
+conffile="${server_root}/httpd.conf"
+prog=httpd.worker
+
+. "${server_root}/functions"
+
+RETVAL=0
+
+start() {
+	echo -n $"Starting pilot debug environment: "
+	daemon --pidfile $pidfile /usr/sbin/$prog -f $conffile
+	RETVAL=$?
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stoping pilot debug environment: "
+	killproc -p $pidfile $prog
+	RETVAL=$?
+	[ $RETVAL = 0 ] && rm -f $pidfile
+}
+
+reload() {
+	echo -n $"Reloading pilot debug environment: "
+	killproc -p $pidfile $prog -HUP
+	RETVAL=$?
+}
+
+restart() {
+	stop
+	echo
+	start
+}
+
+# See how we were called.
+case "$1" in
+  start|stop|restart|reload)
+	$1
+	echo
+	;;
+  status)
+	status -p $pidfile $prog
+	RETVAL=$?
+	;;
+  configtest)
+        /usr/sbin/$prog -f $conffile -t
+	RETVAL=$?
+	;;
+  *)
+	echo 1>&2 $"Usage: $0 {start|stop|restart|status|configtest}"
+	exit 1
+esac
+
+exit $RETVAL

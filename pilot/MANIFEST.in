@@ -1,0 +1,8 @@
+include pilot/config/deployment.ini_tmpl
+include pilot/model/repository/migrate.cfg
+recursive-include pilot/public *
+recursive-include pilot/templates *
+recursive-include doc *
+include schema/*.js
+include pilot-example.ini
+include logrotate-pilot.conf
